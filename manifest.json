@@ -1,0 +1,19 @@
+{
+  "name": "Discgolf Designer — Gotthard Hořice",
+  "short_name": "Discgolf HC",
+  "description": "Návrh discgolfového hřiště v Sochařském parku u sv. Gotharda v Hořicích",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f7f7",
+  "theme_color": "#2c7",
+  "lang": "cs",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["maps", "sports", "utilities"]
+}
