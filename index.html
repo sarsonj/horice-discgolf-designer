@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <meta name="theme-color" content="#2c7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Discgolf HC">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <title>Discgolf Designer — Gotthard Hořice</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -925,6 +932,51 @@ renderSculptures();
 renderBuffers();
 renderParcels();
 saveAndRender();
+
+// --- Service Worker pro PWA / offline ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered:', reg.scope);
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            showToast('Nová verze připravena. Obnov stránku.', 5000);
+          }
+        });
+      });
+    }).catch(err => console.warn('SW failed:', err));
+  });
+}
+
+// --- PWA install prompt ---
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Ukaž "Instalovat" tlačítko v sidebar pod exportem
+  const info = document.getElementById('export-info');
+  if (info && !document.getElementById('install-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'install-btn';
+    btn.className = 'btn btn-primary';
+    btn.style.marginTop = '8px';
+    btn.textContent = '📲 Instalovat jako aplikaci';
+    btn.onclick = async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') btn.remove();
+      deferredInstallPrompt = null;
+    };
+    info.parentNode.insertBefore(btn, info.nextSibling);
+  }
+});
+window.addEventListener('appinstalled', () => {
+  const b = document.getElementById('install-btn'); if (b) b.remove();
+  showToast('✓ Aplikace nainstalována', 3000);
+});
 </script>
 </body>
 </html>
