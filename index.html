@@ -62,6 +62,28 @@ input[type=range] { width: 100%; }
 .parcel-popup b { font-size: 13px; }
 .parcel-popup a { display: inline-block; margin-top: 6px; padding: 6px 10px; background: #2c7; color: white; text-decoration: none; border-radius: 3px; font-size: 12px; }
 
+/* Notes & photos */
+.popup-form textarea { width: 100%; padding: 6px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; min-height: 50px; }
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; }
+.photo-thumb { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 4px; background: #eee; cursor: pointer; }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb .del-btn { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 14px; padding: 0; line-height: 18px; }
+.photo-add { aspect-ratio: 1; border: 2px dashed #aaa; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #777; cursor: pointer; background: white; }
+.photo-add:hover { background: #f0f0f0; border-color: #2c7; color: #2c7; }
+.photo-add input { display: none; }
+.parcel-link-row { background: #f0f8ff; border-radius: 4px; padding: 6px 8px; margin: 6px 0; font-size: 12px; }
+.parcel-link-row a { color: #1e88e5; text-decoration: none; }
+.parcel-link-row a:hover { text-decoration: underline; }
+
+/* Photo viewer modal */
+#photo-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+#photo-viewer.show { display: flex; }
+#photo-viewer img { max-width: 95vw; max-height: 85vh; object-fit: contain; }
+#photo-viewer .close-btn { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; font-size: 22px; cursor: pointer; }
+
+/* Mobile sheet close button */
+#sheet-close-btn { display: none; }
+
 /* --- GPS uživatel marker --- */
 .gps-pulse {
   width: 16px; height: 16px; border-radius: 50%;
@@ -143,6 +165,15 @@ input[type=range] { width: 100%; }
     width: 40px; height: 4px; background: #ccc; border-radius: 2px;
   }
   #sidebar h2 { font-size: 14px; }
+  #sheet-close-btn {
+    display: flex;
+    position: absolute; top: 4px; right: 8px;
+    width: 36px; height: 36px;
+    align-items: center; justify-content: center;
+    font-size: 24px; color: #555; cursor: pointer;
+    background: transparent; border: none;
+    z-index: 10;
+  }
 
   /* Spodní lišta */
   #mobile-bar {
@@ -206,6 +237,7 @@ input[type=range] { width: 100%; }
 </div>
 
 <div id="sidebar">
+  <button id="sheet-close-btn" onclick="toggleSidebar()" aria-label="Zavřít">×</button>
   <h2>Discgolf Designer<br><small>Sochařský park Gotthard, Hořice</small></h2>
 
   <h3>Návrh hřiště</h3>
@@ -263,7 +295,28 @@ input[type=range] { width: 100%; }
   <button class="btn" onclick="closeAllModals()" style="width:100%; padding:12px;">Zrušit</button>
 </div>
 
+<div id="hole-note-dialog" class="modal">
+  <h3 id="hole-note-title">Poznámka k jamce</h3>
+  <label>Poznámka:</label>
+  <textarea id="hole-note-text" style="width:100%;min-height:80px;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:14px;"></textarea>
+  <label style="margin-top:8px;display:block;">Fotky:</label>
+  <div id="hole-note-photos"></div>
+  <label class="photo-add" style="margin-top:6px;display:flex;">
+    📷 Přidat foto
+    <input type="file" accept="image/*" capture="environment" id="hole-note-photo-input">
+  </label>
+  <div style="display:flex;gap:6px;margin-top:12px;">
+    <button class="btn btn-primary" id="hole-note-save" style="flex:1;padding:12px;">Uložit</button>
+    <button class="btn" onclick="closeAllModals()" style="flex:1;padding:12px;">Zrušit</button>
+  </div>
+</div>
+
 <div id="toast"></div>
+
+<div id="photo-viewer" onclick="closePhotoViewer()">
+  <button class="close-btn" onclick="event.stopPropagation(); closePhotoViewer()">×</button>
+  <img id="photo-viewer-img" src="" alt="">
+</div>
 
 <script>
 const SCULPTURES = [{"park":"Gotthard","lat":50.367242,"lon":15.645516,"name":"Sochařský park U sv. Gotharda","type":"sculpture","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.364776,"lon":15.644026,"name":"Socha Jana Žižky z Trocnova","type":"statue","artist":"Pavel Jiříček;Josef Jiříček","material":"sandstone","year":"1873-09-07","wikidata":"Q37276291"},{"park":"Gotthard","lat":50.368949,"lon":15.643384,"name":"Socha Chovatelka","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724112"},{"park":"Gotthard","lat":50.368938,"lon":15.643489,"name":"Socha Pěstitel","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724113"},{"park":"Gotthard","lat":50.367229,"lon":15.642026,"name":"Před branou","type":"","artist":"","material":"","year":"","wikidata":"Q123721245"},{"park":"Gotthard","lat":50.365552,"lon":15.642464,"name":"Fragmenty","type":"","artist":"","material":"","year":"","wikidata":"Q123721246"},{"park":"Gotthard","lat":50.366986,"lon":15.644152,"name":"Květiny","type":"","artist":"","material":"","year":"","wikidata":"Q123721248"},{"park":"Gotthard","lat":50.366836,"lon":15.64305,"name":"Kámen","type":"","artist":"","material":"","year":"","wikidata":"Q123721247"},{"park":"Gotthard","lat":50.366747,"lon":15.64416,"name":"Vlna","type":"statue","artist":"","material":"","year":"","wikidata":"Q123721265"},{"park":"Gotthard","lat":50.366854,"lon":15.6442,"name":"Sluneční hodiny","type":"","artist":"","material":"","year":"","wikidata":"Q123721266"},{"park":"Gotthard","lat":50.366809,"lon":15.643935,"name":"Malá noční hudba","type":"","artist":"","material":"","year":"","wikidata":"Q123721267"},{"park":"Gotthard","lat":50.366499,"lon":15.640336,"name":"socha Krakonoše","type":"statue","artist":"","material":"","year":"","wikidata":"Q37276956"},{"park":"Gotthard","lat":50.366774,"lon":15.639639,"name":"Socha orla","type":"statue","artist":"","material":"","year":"","wikidata":"Q94447289"},{"park":"Gotthard","lat":50.365296,"lon":15.644599,"name":"socha Panny Marie Celenské v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q102271565"},{"park":"Gotthard","lat":50.364494,"lon":15.643798,"name":"socha sv. Jana Nepomuckého pod kostelem sv. Gottharda v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q102271996"},{"park":"Gotthard","lat":50.364833,"lon":15.644465,"name":"socha svatého Václava v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q37277522"},{"park":"Gotthard","lat":50.365086,"lon":15.644592,"name":"socha svatého Gottharda v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q37277556"},{"park":"Gotthard","lat":50.367439,"lon":15.644234,"name":"Tajná zpráva","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724073"},{"park":"Gotthard","lat":50.366646,"lon":15.641979,"name":"Vztahy","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724095"},{"park":"Gotthard","lat":50.366411,"lon":15.64187,"name":"Model","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724097"},{"park":"Gotthard","lat":50.36657,"lon":15.641939,"name":"Střetnutí","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724096"},{"park":"Gotthard","lat":50.366321,"lon":15.64183,"name":"Hrudník","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724098"},{"park":"Gotthard","lat":50.366196,"lon":15.642162,"name":"Vnitřní zápas","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724101"},{"park":"Gotthard","lat":50.366261,"lon":15.642108,"name":"Socha","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724103"},{"park":"Gotthard","lat":50.366234,"lon":15.642328,"name":"Socha","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724102"},{"park":"Gotthard","lat":50.366131,"lon":15.642779,"name":"Věž na větvi","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724107"},{"park":"Gotthard","lat":50.365813,"lon":15.64323,"name":"Ruka a srdce","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724115"},{"park":"Gotthard","lat":50.365896,"lon":15.643224,"name":"Levitace","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724116"},{"park":"Gotthard","lat":50.366053,"lon":15.643353,"name":"Socha Bez názvu v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724117"},{"park":"Gotthard","lat":50.366143,"lon":15.643378,"name":"Terč","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724118"},{"park":"Gotthard","lat":50.366242,"lon":15.643324,"name":"Hladina","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724119"},{"park":"Gotthard","lat":50.36633,"lon":15.643358,"name":"Zhroucená karyatida","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724121"},{"park":"Gotthard","lat":50.366431,"lon":15.64338,"name":"Srostlice","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724122"},{"park":"Gotthard","lat":50.365642,"lon":15.643272,"name":"Socha","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724133"},{"park":"Gotthard","lat":50.366274,"lon":15.643058,"name":"Socha","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724134"},{"park":"Gotthard","lat":50.365994,"lon":15.64301,"name":"Výstraha","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724135"},{"park":"Gotthard","lat":50.366174,"lon":15.643122,"name":"Zátiší","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724137"},{"park":"Gotthard","lat":50.36639,"lon":15.6432,"name":"VELKÝ ZÁKLECHT","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724138"},{"park":"Gotthard","lat":50.366401,"lon":15.643613,"name":"Kámen","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724143"},{"park":"Gotthard","lat":50.365895,"lon":15.643755,"name":"Kritický bod","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724146"},{"park":"Gotthard","lat":50.366297,"lon":15.643575,"name":"Žena v metru","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724144"},{"park":"Gotthard","lat":50.366034,"lon":15.643569,"name":"Wie es ist","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724145"},{"park":"Gotthard","lat":50.36577,"lon":15.64394,"name":"Primitivní pozorovatel","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724147"},{"park":"Gotthard","lat":50.365657,"lon":15.643752,"name":"Spáči","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724148"},{"park":"Gotthard","lat":50.364828,"lon":15.642642,"name":"Řetěz","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724152"},{"park":"Gotthard","lat":50.364536,"lon":15.64257,"name":"Zeměkoule","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724154"},{"park":"Gotthard","lat":50.364522,"lon":15.64211,"name":"5 kamenů","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724155"},{"park":"Gotthard","lat":50.364587,"lon":15.641686,"name":"Hříbě","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724156"},{"park":"Gotthard","lat":50.365251,"lon":15.644405,"name":"Socha Český Prométheus","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724159"},{"park":"Gotthard","lat":50.364407,"lon":15.642996,"name":"Bambusové výhonky","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724153"},{"park":"Gotthard","lat":50.365238,"lon":15.64292,"name":"Obelisk","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724151"},{"park":"Gotthard","lat":50.365436,"lon":15.642912,"name":"Hrátky","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724150"},{"park":"Gotthard","lat":50.365514,"lon":15.643105,"name":"Mutatio genetico","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724149"},{"park":"Gotthard","lat":50.365731,"lon":15.64212,"name":"Túžba","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724100"},{"park":"Gotthard","lat":50.365691,"lon":15.64309,"name":"Český vítr","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724132"},{"park":"Gotthard","lat":50.3658,"lon":15.64293,"name":"Kleopatra","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724136"},{"park":"Gotthard","lat":50.365886,"lon":15.642762,"name":"Poslední píseň","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724136"},{"park":"Gotthard","lat":50.365807,"lon":15.642498,"name":"Kamenolom","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724105"},{"park":"Gotthard","lat":50.365921,"lon":15.642205,"name":"Hnízdo","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724105"},{"park":"Gotthard","lat":50.366515,"lon":15.643479,"name":"Staré provensálské město","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724123"},{"park":"Gotthard","lat":50.366596,"lon":15.643656,"name":"Očekávání","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724142"},{"park":"Gotthard","lat":50.366627,"lon":15.643435,"name":"Mašle","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724124"},{"park":"Gotthard","lat":50.366711,"lon":15.643573,"name":"Obětiště lásky","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724125"},{"park":"Gotthard","lat":50.366569,"lon":15.643197,"name":"Sedící","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724139"},{"park":"Gotthard","lat":50.366756,"lon":15.644348,"name":"Dům","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724161"},{"park":"Gotthard","lat":50.366986,"lon":15.64219,"name":"Plodnost","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724094"},{"park":"Gotthard","lat":50.366943,"lon":15.642291,"name":"Jízda Karla IV.","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724089"},{"park":"Gotthard","lat":50.366882,"lon":15.64237,"name":"Balíček","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724090"},{"park":"Gotthard","lat":50.367011,"lon":15.642483,"name":"Signál 1 - 67","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724088"},{"park":"Gotthard","lat":50.366959,"lon":15.642522,"name":"Spící město","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724087"},{"park":"Gotthard","lat":50.366914,"lon":15.642603,"name":"Viklan","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724086"},{"park":"Gotthard","lat":50.366881,"lon":15.643411,"name":"Přítelkyně","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724110"},{"park":"Gotthard","lat":50.367008,"lon":15.643358,"name":"Labyrint","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724140"},{"park":"Gotthard","lat":50.367114,"lon":15.643461,"name":"Světelné signály","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724084"},{"park":"Gotthard","lat":50.367196,"lon":15.643195,"name":"První vzpomínka","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724085"},{"park":"Gotthard","lat":50.367099,"lon":15.643679,"name":"Svinutá plachta","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724083"},{"park":"Gotthard","lat":50.367013,"lon":15.643799,"name":"Apollo 11","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724082"},{"park":"Gotthard","lat":50.367077,"lon":15.644005,"name":"Křeslo","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724081"},{"park":"Gotthard","lat":50.367181,"lon":15.644261,"name":"Křeslo I","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724074"},{"park":"Gotthard","lat":50.366804,"lon":15.639877,"name":"Socha orla","type":"statue","artist":"","material":"","year":"","wikidata":"Q111933532"},{"park":"Gotthard","lat":50.366939,"lon":15.640079,"name":"Tyrš myslitel","type":"statue","artist":"","material":"","year":"","wikidata":"Q94443651"},{"park":"Gotthard","lat":50.366205,"lon":15.641917,"name":"Bez názvu","type":"statue","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.366285,"lon":15.642015,"name":"Bez názvu","type":"statue","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.366397,"lon":15.642032,"name":"Bez názvu","type":"statue","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.366328,"lon":15.64227,"name":"Bez názvu","type":"statue","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.366907,"lon":15.642968,"name":"Bez názvu","type":"statue","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.36702,"lon":15.643158,"name":"Bez názvu","type":"statue","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.366799,"lon":15.6445,"name":"Bez názvu","type":"statue","artist":"","material":"","year":"","wikidata":""},{"park":"Gotthard","lat":50.364301,"lon":15.643501,"name":"Socha K pramenům v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724157"},{"park":"Gotthard","lat":50.364423,"lon":15.64342,"name":"Socha Odraz v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724158"},{"park":"Gotthard","lat":50.36408,"lon":15.644041,"name":"Socha ženy na Gothardu v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724160"},{"park":"Sv. Josefa","lat":50.368303,"lon":15.64813,"name":"Plastika u domova seniorů v Hořicích","type":"","artist":"","material":"","year":"","wikidata":"Q123721243"},{"park":"Sv. Josefa","lat":50.369505,"lon":15.648806,"name":"Socha Pocta baroku v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724006"},{"park":"Sv. Josefa","lat":50.369738,"lon":15.649259,"name":"Socha Koordinace v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724007"},{"park":"Sv. Josefa","lat":50.369624,"lon":15.649247,"name":"Socha Hlava v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724008"},{"park":"Sv. Josefa","lat":50.36963,"lon":15.649248,"name":"Socha Sněhulák v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724009"},{"park":"Sv. Josefa","lat":50.36957,"lon":15.649244,"name":"Socha Přibližně nekonečno v Sochařském parku v Hoř","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724010"},{"park":"Sv. Josefa","lat":50.369406,"lon":15.649138,"name":"Socha Komunikace v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724011"},{"park":"Sv. Josefa","lat":50.369685,"lon":15.649256,"name":"Socha Absence formy v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724012"},{"park":"Sv. Josefa","lat":50.369582,"lon":15.649221,"name":"Socha Domeček v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724013"},{"park":"Sv. Josefa","lat":50.369625,"lon":15.648672,"name":"Socha Obří trpaslík v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724014"},{"park":"Sv. Josefa","lat":50.36974,"lon":15.648706,"name":"Socha Neprimitivní v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724015"},{"park":"Sv. Josefa","lat":50.369748,"lon":15.648529,"name":"Socha Krajina v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724016"},{"park":"Sv. Josefa","lat":50.36995,"lon":15.64868,"name":"Socha Plavidlo v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724017"},{"park":"Sv. Josefa","lat":50.370212,"lon":15.649221,"name":"Socha Pracant v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724018"},{"park":"Sv. Josefa","lat":50.370065,"lon":15.649235,"name":"Socha Krajina II v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724019"},{"park":"Sv. Josefa","lat":50.370698,"lon":15.64857,"name":"Socha Vzpomínky, ozvěny, sny v Sochařském parku v ","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724020"},{"park":"Sv. Josefa","lat":50.370463,"lon":15.649187,"name":"Socha Jedoucí skála v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724021"},{"park":"Sv. Josefa","lat":50.370778,"lon":15.648583,"name":"Socha Jakubův žebřík v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724022"},{"park":"Sv. Josefa","lat":50.370902,"lon":15.648344,"name":"Socha Sacagawea v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724023"},{"park":"Sv. Josefa","lat":50.371012,"lon":15.648507,"name":"Socha Celulitida v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724025"},{"park":"Sv. Josefa","lat":50.370648,"lon":15.649047,"name":"Socha Trůn v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724024"},{"park":"Sv. Josefa","lat":50.371093,"lon":15.648395,"name":"Socha prÚNIKY v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724026"},{"park":"Sv. Josefa","lat":50.371271,"lon":15.648519,"name":"Socha Hlas větru v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724027"},{"park":"Sv. Josefa","lat":50.37104,"lon":15.6481,"name":"Socha Přibližování pravdě v Sochařském parku v Hoř","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724028"},{"park":"Sv. Josefa","lat":50.371252,"lon":15.648208,"name":"Socha Aktualizovaná verze v Sochařském parku v Hoř","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724029"},{"park":"Sv. Josefa","lat":50.371244,"lon":15.647908,"name":"Socha Individualita v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724031"},{"park":"Sv. Josefa","lat":50.370733,"lon":15.648161,"name":"Socha Pocta Velké pardubické v Sochařském parku v ","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724033"},{"park":"Sv. Josefa","lat":50.371125,"lon":15.647961,"name":"Socha Kolébka - noha v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724032"},{"park":"Sv. Josefa","lat":50.37064,"lon":15.647984,"name":"Socha Zvířata z říše fantazie v Sochařském parku v","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724035"},{"park":"Sv. Josefa","lat":50.37054,"lon":15.647949,"name":"Socha Rozhovor v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724036"},{"park":"Sv. Josefa","lat":50.370004,"lon":15.648543,"name":"Socha Hořické trubičky v Sochařském parku v Hořicí","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724041"},{"park":"Sv. Josefa","lat":50.370389,"lon":15.647993,"name":"Socha Hledící v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724042"},{"park":"Sv. Josefa","lat":50.370412,"lon":15.648441,"name":"Socha High Point v parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724043"},{"park":"Sv. Josefa","lat":50.370262,"lon":15.64868,"name":"Socha Hra v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724044"},{"park":"Sv. Josefa","lat":50.372699,"lon":15.647117,"name":"Socha Zrození v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724045"},{"park":"Sv. Josefa","lat":50.369729,"lon":15.648204,"name":"Socha Jan Křtitel v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724046"},{"park":"Sv. Josefa","lat":50.369809,"lon":15.647971,"name":"Socha Kentaur v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724047"},{"park":"Sv. Josefa","lat":50.370013,"lon":15.647881,"name":"Socha Orient Motion v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724048"},{"park":"Sv. Josefa","lat":50.371077,"lon":15.647257,"name":"Socha Systém v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724051"},{"park":"Sv. Josefa","lat":50.370096,"lon":15.647208,"name":"Socha Domy ve svahu v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724049"},{"park":"Sv. Josefa","lat":50.371135,"lon":15.647427,"name":"Socha Dostatečná rovnováha I v Sochařském parku v ","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724050"},{"park":"Sv. Josefa","lat":50.373162,"lon":15.64728,"name":"Socha Emile, nezapomeň vždy hledět do dálky v Soch","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724053"},{"park":"Sv. Josefa","lat":50.37337,"lon":15.647395,"name":"Socha Vlastní pohled v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724056"},{"park":"Sv. Josefa","lat":50.370116,"lon":15.648364,"name":"Socha Zátiší v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724061"},{"park":"Sv. Josefa","lat":50.370029,"lon":15.648263,"name":"Socha Emotivní situace v Sochařském parku v Hořicí","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724062"},{"park":"Sv. Josefa","lat":50.369942,"lon":15.64812,"name":"Socha Relikviář v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724064"},{"park":"Sv. Josefa","lat":50.370157,"lon":15.648119,"name":"Socha Ve stínu Jákobově v Sochařském parku v Hořic","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724066"},{"park":"Sv. Josefa","lat":50.370034,"lon":15.649068,"name":"Socha Dělat udělané v Sochařském parku v Hořicích","type":"statue","artist":"","material":"","year":"","wikidata":"Q123724067"}];
@@ -348,6 +401,56 @@ const esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/W
 const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM', maxZoom: 19 });
 const cuzk = L.tileLayer.wms('https://geoportal.cuzk.cz/WMS_ORTOFOTO_PUB/WMService.aspx', { layers: 'GR_ORTFOTORGB', format: 'image/png', transparent: false, attribution: '&copy; ČÚZK', maxZoom: 22 });
 L.control.layers({ 'Ortofoto (Esri)': esri, 'Ortofoto ČÚZK': cuzk, 'Mapa (OSM)': osm }, {}).addTo(map);
+
+// --- Pomocné: parcel lookup pod bodem ---
+function pointInPolygon(lat, lon, polygon) {
+  let inside = false; const n = polygon.length;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+    if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi + 1e-12) + xi)) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+function findParcelAt(lat, lon) {
+  for (const f of PARCELS.features) {
+    const coords = f.geometry.coordinates[0];
+    if (pointInPolygon(lat, lon, coords)) return f.properties;
+  }
+  return null;
+}
+
+// --- Foto komprese ---
+function compressImageToDataURL(file, maxDim = 1280, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function openPhotoViewer(dataUrl) {
+  document.getElementById('photo-viewer-img').src = dataUrl;
+  document.getElementById('photo-viewer').classList.add('show');
+}
+function closePhotoViewer() {
+  document.getElementById('photo-viewer').classList.remove('show');
+}
 
 function haversine(p1, p2) {
   const R = 6371000;
@@ -440,37 +543,157 @@ function renderParkBoundary() {
   }).addTo(map);
 }
 
+function renderPhotoGrid(photos, onDelete) {
+  if (!photos || photos.length === 0) return '<div style="color:#999;font-size:11px;">Žádné fotky</div>';
+  return '<div class="photo-grid">' + photos.map((p, i) =>
+    `<div class="photo-thumb" data-i="${i}">
+       <img src="${p}" alt="">
+       <button class="del-btn" data-del="${i}">×</button>
+     </div>`
+  ).join('') + '</div>';
+}
+
 function makePopup(hole, type) {
   const point = hole[type];
+  if (!point.photos) point.photos = [];
+  if (point.note === undefined) point.note = '';
+
+  const parcel = findParcelAt(point.lat, point.lon);
+  const parcelHtml = parcel
+    ? `<div class="parcel-link-row">📐 Parcela <b>${parcel.label}</b> (${parcel.area_m2.toLocaleString('cs')} m²) — <a href="https://nahlizenidokn.cuzk.gov.cz/VyberParcelu/Parcela/VyhledejParcelu?katastralniUzemiKod=645168&parcelniCislo=${encodeURIComponent(parcel.label)}" target="_blank">Nahlížení do KN →</a></div>`
+    : `<div class="parcel-link-row" style="background:#fff3f0;">⚠️ Bod není na žádné z evidovaných parcel parku</div>`;
+
   const div = document.createElement('div');
   div.className = 'popup-form';
   div.innerHTML = `
     <b>Jamka ${hole.id} — ${type === 'tee' ? 'Odpaliště' : 'Koš'}</b>
     <div style="font-size:11px;color:#777;margin:2px 0">${activeVariant().name}</div>
+    ${parcelHtml}
     <label>Lat: <input type="number" step="0.0000001" class="lat-in" value="${point.lat.toFixed(7)}" inputmode="decimal"></label>
     <label>Lon: <input type="number" step="0.0000001" class="lon-in" value="${point.lon.toFixed(7)}" inputmode="decimal"></label>
+    <label>Poznámka:
+      <textarea class="note-in" placeholder="Např. velký kámen vlevo, ostrý úhel...">${point.note}</textarea>
+    </label>
+    <label>Fotky:</label>
+    <div class="photo-list">${renderPhotoGrid(point.photos)}</div>
+    <label class="photo-add" style="margin-top:6px;">
+      📷 Přidat foto
+      <input type="file" accept="image/*" capture="environment" class="photo-input">
+    </label>
     <div class="row">
-      <button class="btn-primary btn-update">Aktualizovat</button>
-      <button class="btn-delete" style="color:red">Smazat</button>
+      <button class="btn-primary btn-update">Uložit</button>
+      <button class="btn-delete" style="color:red">Smazat bod</button>
     </div>
   `;
+
+  const refreshPhotos = () => {
+    div.querySelector('.photo-list').innerHTML = renderPhotoGrid(point.photos);
+    attachPhotoHandlers();
+  };
+  const attachPhotoHandlers = () => {
+    div.querySelectorAll('.photo-thumb img').forEach(img => {
+      img.onclick = () => openPhotoViewer(img.src);
+    });
+    div.querySelectorAll('.del-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const i = parseInt(btn.dataset.del);
+        if (confirm('Smazat foto?')) {
+          point.photos.splice(i, 1);
+          bumpChanges(); save();
+          refreshPhotos();
+        }
+      };
+    });
+  };
+  attachPhotoHandlers();
+
+  div.querySelector('.photo-input').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const dataUrl = await compressImageToDataURL(file);
+      point.photos.push(dataUrl);
+      bumpChanges();
+      try { save(); } catch (err) {
+        if (err.name === 'QuotaExceededError') {
+          point.photos.pop();
+          alert('Nedostatek místa v prohlížeči. Stáhni si JSON export, smaž starší fotky a zkus znovu.');
+          return;
+        }
+        throw err;
+      }
+      refreshPhotos();
+      showToast('Foto přidáno', 1500);
+    } catch (err) {
+      alert('Chyba při zpracování fotky: ' + err.message);
+    }
+    e.target.value = '';
+  };
+
   div.querySelector('.btn-update').onclick = () => {
     const lat = parseFloat(div.querySelector('.lat-in').value);
     const lon = parseFloat(div.querySelector('.lon-in').value);
+    const note = div.querySelector('.note-in').value;
     if (isFinite(lat) && isFinite(lon)) {
-      hole[type] = { lat, lon };
+      point.lat = lat; point.lon = lon; point.note = note;
       bumpChanges();
       saveAndRender();
       map.closePopup();
     }
   };
   div.querySelector('.btn-delete').onclick = () => {
+    if (!confirm(`Smazat ${type === 'tee' ? 'odpaliště' : 'koš'} jamky ${hole.id}?`)) return;
     delete hole[type];
     bumpChanges();
     saveAndRender();
     map.closePopup();
   };
   return div;
+}
+
+function openHoleNoteDialog(hole) {
+  if (!hole.photos) hole.photos = [];
+  if (hole.note === undefined) hole.note = '';
+  const dialog = document.getElementById('hole-note-dialog');
+  document.getElementById('hole-note-title').textContent = `Jamka ${hole.id} — poznámka a fotky`;
+  document.getElementById('hole-note-text').value = hole.note;
+  const photoListEl = document.getElementById('hole-note-photos');
+  const refresh = () => {
+    photoListEl.innerHTML = renderPhotoGrid(hole.photos);
+    photoListEl.querySelectorAll('.photo-thumb img').forEach(img => {
+      img.onclick = () => openPhotoViewer(img.src);
+    });
+    photoListEl.querySelectorAll('.del-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const i = parseInt(btn.dataset.del);
+        if (confirm('Smazat foto?')) { hole.photos.splice(i, 1); bumpChanges(); save(); refresh(); renderHoleList(); }
+      };
+    });
+  };
+  refresh();
+  document.getElementById('hole-note-photo-input').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const dataUrl = await compressImageToDataURL(file);
+      hole.photos.push(dataUrl);
+      bumpChanges();
+      try { save(); } catch (err) {
+        if (err.name === 'QuotaExceededError') { hole.photos.pop(); alert('Nedostatek místa.'); return; }
+        throw err;
+      }
+      refresh(); renderHoleList(); showToast('Foto přidáno', 1500);
+    } catch (err) { alert('Chyba: ' + err.message); }
+    e.target.value = '';
+  };
+  document.getElementById('hole-note-save').onclick = () => {
+    hole.note = document.getElementById('hole-note-text').value;
+    bumpChanges(); saveAndRender();
+    document.getElementById('modal-backdrop').classList.remove('show');
+    dialog.classList.remove('show');
+  };
+  document.getElementById('modal-backdrop').classList.add('show');
+  dialog.classList.add('show');
 }
 
 function createMarker(type, hole) {
@@ -549,17 +772,24 @@ function renderHoleList() {
     const div = document.createElement('div');
     const isComplete = h.tee && h.basket;
     div.className = 'hole-row ' + (isComplete ? 'complete' : 'partial') + (h.id === currentHoleId ? ' active' : '');
+    const hasNote = (h.note && h.note.trim()) || (h.photos && h.photos.length);
+    const noteIcon = hasNote ? `<span title="${(h.photos||[]).length} foto${(h.note||'').trim() ? ', poznámka' : ''}" style="color:#fb0;font-weight:bold">📝${(h.photos||[]).length || ''}</span>` : '';
     let info = `<div class="info"><b>Jamka ${h.id}</b> `;
     info += h.tee ? '<span style="color:#2c7">T✓</span>' : '<span style="color:#bbb">T·</span>';
     info += ' ';
     info += h.basket ? '<span style="color:#e63">K✓</span>' : '<span style="color:#bbb">K·</span>';
+    info += ' ' + noteIcon;
     let dist = '';
     if (isComplete) {
       const d = haversine(h.tee, h.basket); totalLen += d; complete++;
       dist = `<div class="meta">${d.toFixed(0)} m</div>`;
     }
     info += dist + '</div>';
-    div.innerHTML = info + `<button class="btn btn-danger btn-icon" onclick="event.stopPropagation(); deleteHole(${h.id})">×</button>`;
+    div.innerHTML = info +
+      `<button class="btn btn-icon" title="Poznámka a fotky" data-note="${h.id}">📝</button>` +
+      `<button class="btn btn-danger btn-icon" data-del="${h.id}">×</button>`;
+    div.querySelector('[data-note]').onclick = (e) => { e.stopPropagation(); openHoleNoteDialog(h); };
+    div.querySelector('[data-del]').onclick = (e) => { e.stopPropagation(); deleteHole(h.id); };
     div.onclick = () => {
       currentHoleId = h.id;
       const p = h.tee || h.basket;
@@ -793,8 +1023,37 @@ document.getElementById('show-park-boundary').onchange = renderParkBoundary;
 
 // --- Mobil: bottom sheet ---
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('expanded');
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('expanded');
+  document.getElementById('mob-sheet').classList.toggle('active', sb.classList.contains('expanded'));
 }
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  if (sb.classList.contains('expanded')) {
+    sb.classList.remove('expanded');
+    document.getElementById('mob-sheet').classList.remove('active');
+  }
+}
+
+// Klik na mapu zavře sheet (mobile)
+map.on('click', () => closeSidebar());
+
+// Swipe-down gesto pro zavření sheetu
+(() => {
+  const sb = document.getElementById('sidebar');
+  let startY = null, dragging = false;
+  sb.addEventListener('touchstart', e => {
+    if (e.touches[0].clientY - sb.getBoundingClientRect().top < 40) {
+      startY = e.touches[0].clientY; dragging = true;
+    }
+  }, { passive: true });
+  sb.addEventListener('touchmove', e => {
+    if (!dragging || startY === null) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 40) { closeSidebar(); dragging = false; startY = null; }
+  }, { passive: true });
+  sb.addEventListener('touchend', () => { dragging = false; startY = null; });
+})();
 
 // --- GPS ---
 function toggleGeo() {
@@ -916,6 +1175,7 @@ function applyGPSTo(target) {
 function closeAllModals() {
   document.getElementById('modal-backdrop').classList.remove('show');
   document.getElementById('use-gps-dialog').classList.remove('show');
+  document.getElementById('hole-note-dialog').classList.remove('show');
 }
 
 function showToast(msg, ms) {
