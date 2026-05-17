@@ -82,6 +82,20 @@ input[type=range] { width: 100%; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* Lock toggle button v mapě */
+#lock-toggle {
+  position: absolute; top: 80px; left: 10px;
+  z-index: 1000;
+  width: 36px; height: 36px;
+  background: white; border: 2px solid #ccc; border-radius: 4px;
+  cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+#lock-toggle:hover { background: #f0f0f0; }
+#lock-toggle.locked { background: #fff3cd; border-color: #e63; color: #c33; }
+#lock-toggle .icon { line-height: 1; }
+
 /* Photo viewer modal */
 #photo-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; display: none; align-items: center; justify-content: center; flex-direction: column; }
 #photo-viewer.show { display: flex; }
@@ -266,6 +280,10 @@ input[type=range] { width: 100%; }
 
 <div id="map"></div>
 
+<button id="lock-toggle" onclick="toggleLock()" title="Zamknout / odemknout body proti přesouvání">
+  <span class="icon">🔓</span>
+</button>
+
 <div id="gps-status"></div>
 
 <button id="fab-use-gps" onclick="openUseGPSDialog()">📍 Použít moji polohu</button>
@@ -383,6 +401,7 @@ function defaultData() {
     ],
     activeVariantId: 'parklife',
     changesSinceExport: 0,
+    locked: false,
   };
 }
 
@@ -816,7 +835,7 @@ function createMarker(type, hole) {
     html: `<div class="marker-icon" style="background:${bg}">${type === 'tee' ? 'T' : 'K'}${hole.id}</div>`,
     iconSize: [30, 30], iconAnchor: [15, 15]
   });
-  const m = L.marker([point.lat, point.lon], { draggable: true, icon: icon, autoPan: true }).addTo(map);
+  const m = L.marker([point.lat, point.lon], { draggable: !data.locked, icon: icon, autoPan: true }).addTo(map);
   m.on('dragend', e => {
     const ll = e.target.getLatLng();
     hole[type] = { lat: ll.lat, lon: ll.lng };
@@ -1139,6 +1158,30 @@ document.getElementById('buffer-radius').oninput = e => {
 document.getElementById('show-parcels').onchange = renderParcels;
 document.getElementById('show-park-boundary').onchange = renderParkBoundary;
 
+// --- Lock (zámek proti náhodnému posunutí markeru) ---
+function updateLockUI() {
+  const btn = document.getElementById('lock-toggle');
+  if (!btn) return;
+  btn.classList.toggle('locked', !!data.locked);
+  btn.querySelector('.icon').textContent = data.locked ? '🔒' : '🔓';
+  btn.title = data.locked ? 'Body uzamčeny proti drag&drop (klikni pro odemčení)' : 'Klikni pro zamčení bodů proti drag&drop';
+}
+function toggleLock() {
+  data.locked = !data.locked;
+  // Aktualizuj všechny existující markery bez re-renderu
+  Object.values(markersByHole).forEach(g => {
+    ['tee', 'basket'].forEach(t => {
+      if (g[t] && g[t].dragging) {
+        if (data.locked) g[t].dragging.disable();
+        else g[t].dragging.enable();
+      }
+    });
+  });
+  save();
+  updateLockUI();
+  showToast(data.locked ? '🔒 Body uzamčeny — drag zablokován' : '🔓 Body odemčeny', 2000);
+}
+
 // --- Mobil: bottom sheet ---
 function toggleSidebar() {
   const sb = document.getElementById('sidebar');
@@ -1306,6 +1349,8 @@ function showToast(msg, ms) {
 
 // init
 if (holes().length > 0) currentHoleId = holes()[0].id;
+if (typeof data.locked !== 'boolean') data.locked = false;
+updateLockUI();
 renderSculptures();
 renderBuffers();
 renderParcels();
