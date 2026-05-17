@@ -502,7 +502,14 @@ function renderParcels() {
     },
     onEachFeature: (feat, layer) => {
       const p = feat.properties;
-      const nahlizUrl = `https://nahlizenidokn.cuzk.gov.cz/VyberParcelu/Parcela/VyhledejParcelu?katastralniUzemiKod=645168&parcelniCislo=${encodeURIComponent(p.label)}`;
+      // Použij referenční bod parcely (její střed) pro otevření iKatastru
+      let plat = null, plon = null;
+      try {
+        const coords = feat.geometry.coordinates[0];
+        plon = coords.reduce((a, c) => a + c[0], 0) / coords.length;
+        plat = coords.reduce((a, c) => a + c[1], 0) / coords.length;
+      } catch {}
+      const ikatUrl = `https://www.ikatastr.cz/#kde=${plat||50.3665},${plon||15.6435},20&mapa=zakladni&info=parcela`;
       const owner = parcelOwners[p.natref] || 'nezadano';
       layer.bindPopup(() => {
         const div = document.createElement('div');
@@ -518,7 +525,7 @@ function renderParcels() {
             <option value="jine" ${owner==='jine'?'selected':''}>Jiný (soukromý)</option>
             <option value="nezname" ${owner==='nezname'?'selected':''}>Sporné</option>
           </select>
-          <a href="${nahlizUrl}" target="_blank">Otevřít v Nahlížení do KN →</a>
+          <a href="${ikatUrl}" target="_blank">Otevřít v iKatastru →</a>
         `;
         div.querySelector('.owner-select').onchange = (e) => {
           if (e.target.value === 'nezadano') delete parcelOwners[p.natref];
@@ -559,9 +566,10 @@ function makePopup(hole, type) {
   if (point.note === undefined) point.note = '';
 
   const parcel = findParcelAt(point.lat, point.lon);
+  const ikatUrl = `https://www.ikatastr.cz/#kde=${point.lat},${point.lon},19&mapa=zakladni&info=parcela`;
   const parcelHtml = parcel
-    ? `<div class="parcel-link-row">📐 Parcela <b>${parcel.label}</b> (${parcel.area_m2.toLocaleString('cs')} m²) — <a href="https://nahlizenidokn.cuzk.gov.cz/VyberParcelu/Parcela/VyhledejParcelu?katastralniUzemiKod=645168&parcelniCislo=${encodeURIComponent(parcel.label)}" target="_blank">Nahlížení do KN →</a></div>`
-    : `<div class="parcel-link-row" style="background:#fff3f0;">⚠️ Bod není na žádné z evidovaných parcel parku</div>`;
+    ? `<div class="parcel-link-row">📐 Parcela <b>${parcel.label}</b> (${parcel.area_m2.toLocaleString('cs')} m²) k.ú. Hořice v Podkrkonoší — <a href="${ikatUrl}" target="_blank">Otevřít v iKatastru →</a></div>`
+    : `<div class="parcel-link-row" style="background:#fff3f0;">⚠️ Bod není na žádné evidované parcele parku. <a href="${ikatUrl}" target="_blank" style="color:#1e88e5">Otevřít iKatastr →</a></div>`;
 
   const div = document.createElement('div');
   div.className = 'popup-form';
