@@ -999,8 +999,10 @@ function renderHoleList() {
     }
     info += dist + '</div>';
     div.innerHTML = info +
+      `<button class="btn btn-icon" title="Vložit novou jamku za tuto" data-insert="${h.id}">⤓</button>` +
       `<button class="btn btn-icon" title="Poznámka a fotky" data-note="${h.id}">📝</button>` +
       `<button class="btn btn-danger btn-icon" data-del="${h.id}">×</button>`;
+    div.querySelector('[data-insert]').onclick = (e) => { e.stopPropagation(); insertHoleAfter(h.id); };
     div.querySelector('[data-note]').onclick = (e) => { e.stopPropagation(); openHoleNoteDialog(h); };
     div.querySelector('[data-del]').onclick = (e) => { e.stopPropagation(); deleteHole(h.id); };
     div.onclick = () => {
@@ -1125,16 +1127,40 @@ map.on('click', e => {
   saveAndRender();
 });
 
-function newHole() {
-  const hs = holes();
-  const nextId = hs.length > 0 ? Math.max(...hs.map(h => h.id)) + 1 : 1;
-  hs.push({ id: nextId }); currentHoleId = nextId; bumpChanges(); saveAndRender();
+function renumberHoles() {
+  // Přečísluje jamky 1..N podle pořadí v poli (aby nebyly mezery a ID = pozice)
+  holes().forEach((h, i) => { h.id = i + 1; });
 }
+
+function newHole() {
+  // Přidá novou jamku na KONEC
+  const hs = holes();
+  const newH = { id: hs.length + 1 };
+  hs.push(newH);
+  currentHoleId = newH.id;
+  bumpChanges(); saveAndRender();
+}
+
+function insertHoleAfter(afterId) {
+  // Vloží novou jamku za zadanou pozici, přečísluje vše za ní
+  const hs = holes();
+  const idx = hs.findIndex(h => h.id === afterId);
+  if (idx < 0) return;
+  hs.splice(idx + 1, 0, { id: 0 });  // placeholder
+  renumberHoles();
+  currentHoleId = idx + 2;  // nově vložená jamka (1-indexed)
+  bumpChanges(); saveAndRender();
+}
+
 function deleteHole(id) {
   if (!confirm(`Smazat jamku ${id}?`)) return;
   const v = activeVariant();
   v.holes = v.holes.filter(h => h.id !== id);
-  if (currentHoleId === id) currentHoleId = v.holes.length > 0 ? v.holes[0].id : null;
+  renumberHoles();
+  // Po přečíslování posuneme currentHoleId rozumně
+  if (v.holes.length === 0) currentHoleId = null;
+  else if (id > v.holes.length) currentHoleId = v.holes.length;
+  else currentHoleId = id;  // poloha zůstává (ID následující jamky)
   bumpChanges(); saveAndRender();
 }
 function resetActiveHoles() {
