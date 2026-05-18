@@ -80,15 +80,27 @@ body { display: flex; }
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
+/* Permanentní popisek vzdálenosti na dráze — malý, decentní */
 .tooltip-dist {
-  background: rgba(255,255,255,0.95); padding: 3px 8px;
-  border-radius: 4px; border: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-  font-size: 11px; line-height: 1.3;
-  text-align: center;
+  background: rgba(255,255,255,0.85);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  font-size: 10px;
+  font-weight: 600;
+  color: #555;
 }
-.tooltip-dist .name { font-weight: 700; color: #2c7; }
-.tooltip-dist .meters { font-weight: 400; color: #888; font-size: 10px; }
+/* Tooltip s názvem (hover na markeru / dráze) */
+.tooltip-name {
+  background: #2c7; color: white;
+  padding: 4px 8px; border-radius: 4px;
+  font-size: 12px; font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  border: none;
+}
+.tooltip-name::before { border-top-color: #2c7 !important; }
+.tooltip-name::after { display: none; }
 
 .popup-card { font-size: 13px; }
 .popup-card h4 { margin: 0 0 4px; font-size: 14px; color: #2c7; }
@@ -368,22 +380,25 @@ function renderLayout() {
   const basketColor = '#e63';
   layout.holes.forEach(hole => {
     const g = {};
+    const nameTooltip = hole.name ? `J${hole.id} — ${escapeHtml(hole.name)}` : `J${hole.id}`;
+
     if (hole.tee) {
-      // viewBox 40x40, iconSize 40x40 → anchor [20, 31] = střed křížku (kde stojí hráč)
       const icon = L.divIcon({
         className: 'marker-tee', html: teeSVG(color, hole.id),
         iconSize: [40, 40], iconAnchor: [20, 31]
       });
       g.tee = L.marker([hole.tee.lat, hole.tee.lon], { icon, draggable: false }).addTo(map);
+      // Hover tooltip (desktop) — na mobilu se název objeví v popupu
+      g.tee.bindTooltip(nameTooltip, { direction: 'top', offset: [0, -8], className: 'tooltip-name' });
       g.tee.bindPopup(() => makePopup(hole, 'tee'), { maxWidth: 280 });
     }
     if (hole.basket) {
-      // viewBox 40x46, iconSize 40x46 → anchor [20, 44] = základna sloupu (kde se betonuje)
       const icon = L.divIcon({
         className: 'marker-basket', html: basketSVG(basketColor, hole.id),
         iconSize: [40, 46], iconAnchor: [20, 44]
       });
       g.basket = L.marker([hole.basket.lat, hole.basket.lon], { icon, draggable: false }).addTo(map);
+      g.basket.bindTooltip(nameTooltip, { direction: 'top', offset: [0, -16], className: 'tooltip-name' });
       g.basket.bindPopup(() => makePopup(hole, 'basket'), { maxWidth: 280 });
     }
     if (hole.tee && hole.basket) {
@@ -391,10 +406,8 @@ function renderLayout() {
         color: color, weight: 3, dashArray: '6,5', opacity: 0.85
       }).addTo(map);
       const d = haversine(hole.tee, hole.basket);
-      const label = hole.name
-        ? `<div class="name">J${hole.id} — ${escapeHtml(hole.name)}</div><div class="meters">${d.toFixed(0)} m</div>`
-        : `<div class="name">J${hole.id}</div><div class="meters">${d.toFixed(0)} m</div>`;
-      g.line.bindTooltip(label, { permanent: true, direction: 'center', className: 'tooltip-dist' });
+      // Permanentní decentní label s metry
+      g.line.bindTooltip(`${d.toFixed(0)} m`, { permanent: true, direction: 'center', className: 'tooltip-dist' });
     }
     markers[hole.id] = g;
   });

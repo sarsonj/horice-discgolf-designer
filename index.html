@@ -59,7 +59,12 @@ body { display: flex; }
 .tip { background: #fff8d0; padding: 8px; border-left: 3px solid #fb0; font-size: 11px; margin: 4px 0; line-height: 1.5; }
 #stats { font-size: 12px; padding: 6px; background: white; border-radius: 4px; border: 1px solid #ddd; }
 input[type=range] { width: 100%; }
-.tooltip-dist { background: rgba(255,255,255,0.92); padding: 1px 6px; border-radius: 3px; font-weight: bold; font-size: 11px; color: #2c7; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+/* Permanentní popisek metrů na dráze — decentní */
+.tooltip-dist { background: rgba(255,255,255,0.85); padding: 1px 5px; border-radius: 3px; font-weight: 600; font-size: 10px; color: #555; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+/* Hover tooltip s názvem jamky */
+.tooltip-name { background: #2c7; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: none; }
+.tooltip-name::before { border-top-color: #2c7 !important; }
+.tooltip-name::after { display: none; }
 .variant-bar { display: flex; gap: 2px; align-items: center; margin-bottom: 4px; }
 .variant-bar select { flex: 1; padding: 6px; font-size: 13px; }
 .parcel-popup b { font-size: 13px; }
@@ -891,6 +896,9 @@ function createMarker(type, hole) {
     bumpChanges();
     saveAndRender();
   });
+  // Hover tooltip s názvem (desktop) — na mobilu název v popupu
+  const nameLbl = hole.name ? `J${hole.id} — ${(hole.name+'').replace(/[<>&]/g,'')}` : `J${hole.id}`;
+  m.bindTooltip(nameLbl, { direction: 'top', offset: isBasket ? [0, -16] : [0, -8], className: 'tooltip-name' });
   // Popup: autoPanPadding počítá s bottom toolbarem (60px) + bezpečnou rezervou
   m.bindPopup(() => makePopup(hole, type), {
     autoPan: true,
@@ -917,10 +925,7 @@ function renderHoles() {
     if (hole.tee && hole.basket) {
       g.line = L.polyline([[hole.tee.lat, hole.tee.lon], [hole.basket.lat, hole.basket.lon]], { color: color, weight: 3, dashArray: '6,5' }).addTo(map);
       const d = haversine(hole.tee, hole.basket);
-      const label = hole.name
-        ? `<div class="name">J${hole.id} — ${(hole.name+'').replace(/[<>&]/g,'')}</div><div class="meters">${d.toFixed(0)} m</div>`
-        : `<div class="name">J${hole.id}</div><div class="meters">${d.toFixed(0)} m</div>`;
-      g.line.bindTooltip(label, { permanent: true, direction: 'center', className: 'tooltip-dist' });
+      g.line.bindTooltip(`${d.toFixed(0)} m`, { permanent: true, direction: 'center', className: 'tooltip-dist' });
     }
     markersByHole[hole.id] = g;
   });
