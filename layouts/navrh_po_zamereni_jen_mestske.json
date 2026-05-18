@@ -1,0 +1,122 @@
+{
+  "name": "Návrh po zaměření - jen městské pozemky",
+  "holes": [
+    {
+      "id": 1,
+      "tee": {
+        "lat": 50.3654797,
+        "lon": 15.6419952
+      },
+      "basket": {
+        "lat": 50.3647921,
+        "lon": 15.6419362
+      },
+      "name": "Hříbě",
+      "sculpture_ref": "Stefan Schulz, Německo, 1999"
+    },
+    {
+      "id": 2,
+      "tee": {
+        "lat": 50.3645906,
+        "lon": 15.6421528
+      },
+      "basket": {
+        "lat": 50.3644099581077,
+        "lon": 15.642782449722292
+      },
+      "name": "Pět kamenů",
+      "sculpture_ref": "Osamu Ishikawa, Japonsko, 1991"
+    },
+    {
+      "id": 3,
+      "tee": {
+        "lat": 50.36446813165678,
+        "lon": 15.643139183521273
+      },
+      "basket": {
+        "lat": 50.36478466295365,
+        "lon": 15.64234256744385
+      },
+      "name": "Bambusové výhonky",
+      "sculpture_ref": "Antonie den Ridder, Nizozemí, 1995"
+    },
+    {
+      "id": 4,
+      "tee": {
+        "lat": 50.364883899357984,
+        "lon": 15.642680525779726
+      },
+      "basket": {
+        "lat": 50.36542798492164,
+        "lon": 15.643265247344972
+      },
+      "name": "Obelisk",
+      "sculpture_ref": "Peter Paszkiewicz, Rakousko, 1993"
+    },
+    {
+      "id": 5,
+      "tee": {
+        "lat": 50.366046489708104,
+        "lon": 15.641646534204485
+      },
+      "basket": {
+        "lat": 50.36600970472496,
+        "lon": 15.642663091421129
+      },
+      "name": "Hnízdo",
+      "sculpture_ref": "Gábor Miklya, Maďarsko, 2000"
+    },
+    {
+      "id": 6,
+      "tee": {
+        "lat": 50.36615941087359,
+        "lon": 15.642760992050173
+      },
+      "basket": {
+        "lat": 50.3667705,
+        "lon": 15.6421785
+      },
+      "name": "Věž na větvi",
+      "sculpture_ref": "John D. Antone, USA, 1997"
+    },
+    {
+      "id": 7,
+      "tee": {
+        "lat": 50.36715344772178,
+        "lon": 15.641996562480928
+      },
+      "basket": {
+        "lat": 50.3671017,
+        "lon": 15.6429767
+      },
+      "name": "Před branou",
+      "sculpture_ref": "Birgit Knappe, Německo, 1994"
+    },
+    {
+      "id": 8,
+      "tee": {
+        "lat": 50.3673905,
+        "lon": 15.6427894
+      },
+      "basket": {
+        "lat": 50.367267221695684,
+        "lon": 15.643616616725923
+      },
+      "name": "První vzpomínka",
+      "sculpture_ref": "Alberto Timossi, Itálie, 1994"
+    },
+    {
+      "id": 9,
+      "tee": {
+        "lat": 50.367431466349785,
+        "lon": 15.644582211971285
+      },
+      "basket": {
+        "lat": 50.36691648902078,
+        "lon": 15.644708275794985
+      },
+      "name": "Tajná zpráva",
+      "sculpture_ref": "Xiu Quin Li, Čína, 1994"
+    }
+  ]
+}
