@@ -1,6 +1,6 @@
 // Service Worker pro Discgolf Designer
 // Strategie: app shell + runtime cache pro mapy
-const APP_VERSION = 'v1.5.1';
+const APP_VERSION = 'v1.5.2';
 const APP_CACHE = `discgolf-app-${APP_VERSION}`;
 const TILE_CACHE = 'discgolf-tiles-v1';
 
@@ -43,13 +43,16 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: stale-while-revalidate pro shell, cache-first pro tiles
+// Fetch strategie:
+// - layouty (JSON): NETWORK-FIRST (vždy fresh, fallback cache)
+// - mapové dlaždice: cache-first (offline + rychlost)
+// - app shell (HTML/CSS/JS): stale-while-revalidate
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const isTile = /\/(MapServer\/tile|tile\.openstreetmap\.org|WMService\.aspx|wms\.asp)/.test(url.href);
+  const isLayout = /\/layouts\/.*\.json/.test(url.pathname);
 
   if (isTile) {
-    // Cache-first pro mapové dlaždice (rychlé v terénu, šetří data)
     event.respondWith(
       caches.open(TILE_CACHE).then(cache =>
         cache.match(event.request).then(cached => {
@@ -59,6 +62,21 @@ self.addEventListener('fetch', event => {
             return resp;
           }).catch(() => cached || new Response('', { status: 504 }));
         })
+      )
+    );
+    return;
+  }
+
+  if (isLayout) {
+    // Network-first pro layouty — vždy svěží data
+    event.respondWith(
+      fetch(event.request).then(resp => {
+        if (resp.ok) {
+          caches.open(APP_CACHE).then(cache => cache.put(event.request, resp.clone())).catch(() => {});
+        }
+        return resp.clone();
+      }).catch(() =>
+        caches.open(APP_CACHE).then(cache => cache.match(event.request).then(c => c || new Response('{}', { status: 504, headers: { 'Content-Type': 'application/json' } })))
       )
     );
     return;
