@@ -1,6 +1,6 @@
 // Service Worker pro Discgolf Designer
 // Strategie: app shell + runtime cache pro mapy
-const APP_VERSION = 'v1.3.0';
+const APP_VERSION = 'v1.4.0';
 const APP_CACHE = `discgolf-app-${APP_VERSION}`;
 const TILE_CACHE = 'discgolf-tiles-v1';
 
@@ -8,9 +8,12 @@ const TILE_CACHE = 'discgolf-tiles-v1';
 const APP_SHELL = [
   './',
   './index.html',
+  './view.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './layouts/jindra_v4.json',
+  './layouts/parklife_original.json',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
 ];
