@@ -1,6 +1,6 @@
 // Service Worker pro Discgolf Designer
 // Strategie: app shell + runtime cache pro mapy
-const APP_VERSION = "v1.7.4";
+const APP_VERSION = "v1.7.5";
 const APP_CACHE = `discgolf-app-${APP_VERSION}`;
 const TILE_CACHE = 'discgolf-tiles-v1';
 
