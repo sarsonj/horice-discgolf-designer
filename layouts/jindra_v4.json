@@ -3,6 +3,8 @@
   "holes": [
     {
       "id": 1,
+      "name": "Hříbě",
+      "sculpture_ref": "Stefan Schulz, Německo, 1999",
       "tee": {
         "lat": 50.36548187985019,
         "lon": 15.641929507255556
@@ -14,6 +16,8 @@
     },
     {
       "id": 2,
+      "name": "Pět kamenů",
+      "sculpture_ref": "Osamu Ishikawa, Japonsko, 1991",
       "tee": {
         "lat": 50.36461698717828,
         "lon": 15.64209580421448
@@ -25,6 +29,8 @@
     },
     {
       "id": 3,
+      "name": "Obelisk",
+      "sculpture_ref": "Peter Paszkiewicz, Rakousko, 1993",
       "tee": {
         "lat": 50.364901009061924,
         "lon": 15.6428200006485
@@ -36,6 +42,8 @@
     },
     {
       "id": 4,
+      "name": "Věž na větvi",
+      "sculpture_ref": "John D. Antone, USA, 1997",
       "tee": {
         "lat": 50.36603365774047,
         "lon": 15.642680525779726,
@@ -49,6 +57,8 @@
     },
     {
       "id": 5,
+      "name": "Před branou",
+      "sculpture_ref": "Birgit Knappe, Německo, 1994",
       "tee": {
         "lat": 50.36710982003538,
         "lon": 15.64207971096039
@@ -60,6 +70,8 @@
     },
     {
       "id": 6,
+      "name": "První vzpomínka",
+      "sculpture_ref": "Alberto Timossi, Itálie, 1994",
       "tee": {
         "lat": 50.36742890003146,
         "lon": 15.642785131931307
@@ -71,6 +83,8 @@
     },
     {
       "id": 7,
+      "name": "Tajná zpráva",
+      "sculpture_ref": "Xiu Quin Li, Čína, 1994",
       "tee": {
         "lat": 50.36742034563596,
         "lon": 15.64513072371483
@@ -82,6 +96,8 @@
     },
     {
       "id": 8,
+      "name": "Apollo 11",
+      "sculpture_ref": "František Pacík, ČS, 1969",
       "tee": {
         "lat": 50.36688227106006,
         "lon": 15.645368099212648
@@ -93,6 +109,8 @@
     },
     {
       "id": 9,
+      "name": "Návrat k Preclíkovi",
+      "sculpture_ref": "Vladimír Preclík (zakladatel sympozia)",
       "tee": {
         "lat": 50.36741949019632,
         "lon": 15.646540224552156
